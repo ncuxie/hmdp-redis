@@ -66,6 +66,15 @@ public class UserController {
     }
 
     /**
+     * 连续签到天数统计
+     * @return R
+     */
+    @GetMapping("/sign/count")
+    public Result signCount(){
+        return userService.signCount();
+    }
+
+    /**
      * 发送手机验证码
      */
     @PostMapping("code")
