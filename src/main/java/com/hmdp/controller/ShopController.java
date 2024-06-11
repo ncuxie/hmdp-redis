@@ -26,9 +26,6 @@ public class ShopController {
     @Resource
     public IShopService shopService;
 
-    // TODO: 优惠券秒杀业务！！！
-
-
     /**
      * 根据id查询商铺信息
      *
