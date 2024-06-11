@@ -9,6 +9,7 @@ import com.hmdp.dto.Result;
 import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
+import com.hmdp.utils.CacheClient;
 import com.hmdp.utils.RedisData;
 import com.hmdp.utils.SystemConstants;
 import org.springframework.data.geo.Distance;
@@ -36,6 +37,9 @@ import static com.hmdp.utils.RedisConstants.*;
  */
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
+
+    @Resource
+    private CacheClient cacheClient;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -93,18 +97,18 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     public Result queryById(Long id) {
         String key = CACHE_SHOP_KEY + id;
 
-        Shop shop = queryWithLogicalExpire(id);
-//        // 查询数据库之前先查询缓存
-//        String shopJson = stringRedisTemplate.opsForValue().get(key);
-//
-//        // 如果缓存数据存在，则直接从缓存中返回
-//        if (StrUtil.isNotBlank(shopJson)) {
-//            Shop shop = JSONUtil.toBean(shopJson, Shop.class);
-//            return Result.ok(shop);
-//        }
-//
-//        // 如果缓存数据不存在，再查询数据库，然后将数据存入redis
-//        Shop shop = this.getById(id);
+        // 解决缓存穿透
+        Shop shop = cacheClient
+                .queryWithPassThrough(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+
+        // 互斥锁解决缓存击穿
+        // Shop shop = cacheClient
+        //         .queryWithMutex(CACHE_SHOP_KEY, id, Shop.class, this::getById, CACHE_SHOP_TTL, TimeUnit.MINUTES);
+
+        // 逻辑过期解决缓存击穿
+        // Shop shop = cacheClient
+        //         .queryWithLogicalExpire(CACHE_SHOP_KEY, id, Shop.class, this::getById, 20L, TimeUnit.SECONDS);
+
         if (shop == null) {
             // 添加 null 值,防止缓存穿透(缓存穿透：key在redis和数据库中都不存在，导致请求直达数据库)
             stringRedisTemplate.opsForValue().set(key, "", CACHE_NULL_TTL, TimeUnit.MINUTES);

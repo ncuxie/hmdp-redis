@@ -130,20 +130,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
         // 查询用户
         User user = getOne(new QueryWrapper<User>().eq("phone", phone));
-
-        if (user == null) user = createUserWithPhone(phone);
-
+        if (user == null)
+            user = createUserWithPhone(phone);
         // 保存用户信息到 redis 中
         String token = UUID.randomUUID().toString(true);
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
-        Map<String, Object> map = BeanUtil.beanToMap(userDTO, new HashMap<>(), CopyOptions.create().setIgnoreNullValue(true).setFieldValueEditor((n, v) -> v.toString()));
-        stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, map);
-        stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);
+        Map<String, Object> map = BeanUtil.beanToMap(userDTO, new HashMap<>(),
+                CopyOptions.create().setIgnoreNullValue(true)
+                        .setFieldValueEditor((n, v) -> v.toString()));
+        String tokenKey = LOGIN_USER_KEY + token;
+        stringRedisTemplate.opsForHash().putAll(tokenKey, map);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
         return Result.ok(token);
     }
 
     private User createUserWithPhone(String phone) {
-        User user = User.builder().phone(phone).nickName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10)).build();
+        User user = User.builder()
+                .phone(phone)
+                .nickName(SystemConstants.USER_NICK_NAME_PREFIX + RandomUtil.randomString(10))
+                .createTime(LocalDateTime.now())
+                .updateTime(LocalDateTime.now())
+                .icon("")
+                .build();
         save(user);
         return user;
     }

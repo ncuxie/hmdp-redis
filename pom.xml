@@ -23,22 +23,23 @@
     <dependencies>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
 
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
-
             <exclusions>
-
                 <exclusion>
                     <artifactId>spring-data-redis</artifactId>
                     <groupId>org.springframework.data</groupId>
                 </exclusion>
-
                 <exclusion>
                     <artifactId>lettuce-core</artifactId>
                     <groupId>io.lettuce</groupId>
                 </exclusion>
-
             </exclusions>
         </dependency>
 
@@ -74,7 +75,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <version>1.18.32</version>
         </dependency>
 
         <dependency>
